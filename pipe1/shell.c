@@ -1,11 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/wait.h>
-//#include <sys/stat.h>
 
 #define BUFLEN 1024     // длина входного буфера
 #define DELIM_CHAR '|'  // символ - разделитель команд
@@ -13,17 +11,16 @@
 int main()
 {
 	char buf[BUFLEN];
-    char **argv = NULL; // list of pointers to argvs(лексемы) in input buf
-    unsigned *command;   // список номеров начала команд среди списка argv(лексем). Команда завершается NULL-лексемой
-    unsigned argc;	// number of argv, min=1
-    unsigned numcom;     // number of commands in list
-    unsigned i, j;     // counter
-    char *ch;
-	
+    char **argv = NULL; // список указателей на argvs(лексемы) во входной строке buf
+    unsigned *command;  // список номеров начала команд среди списка argv(лексем). Команда завершается NULL-лексемой
+    unsigned argc;		// количество лексем, min=1
+    unsigned numcom;    // количество команд
+    unsigned i, j;     	// счетчики
+    char *ch;			// текущий символ при разборе входной строки
+		
+// ждем/читаем входную строку		
     fgets( buf, BUFLEN, stdin );
-//    strcpy( buf, "who | sort | uniq -c | sort -nk1");
-//    printf( "%s\n", buf );
-// считаем лексемы в строке из буфера
+// считаем лексемы в строке из буфера, заносим кол-во в argc
 // [<пробелы>]<лексема><пробелы><лексема><DELIM_CHAR><лексема>...<пробелы><лексема>[<пробелы>]'\0'
     ch = buf;
     argc = 0;
@@ -99,11 +96,12 @@ int main()
     } while (*ch);
     argv[i] = NULL; // добавляем NULL лексему в конец команды
 
+// отладка - печатаем список лексем  и команд	
     // for( i=0; i<argc+numcom; i++ )
         // printf( "argv[%d]=%s\n", i, argv[i] );
-	printf( "numcom = %d\n", numcom );
-    for( i=0; i<numcom; i++ )
-		printf( "i=%d command[%d]=%s %s\n", i, i, *(argv+command[i]), *(argv+command[i]+1) );
+//	printf( "numcom = %d\n", numcom );
+    // for( i=0; i<numcom; i++ )
+		// printf( "i=%d command[%d]=%s %s\n", i, i, *(argv+command[i]), *(argv+command[i]+1) );
 
 	int p;
 	int *pfd = (int*) malloc( 2*numcom*sizeof(int) );
@@ -130,15 +128,12 @@ int main()
 
 		}
 	}
-//	if( i==numcom-1 )
-	{
-//    int fd_out = open( "/home/box/result.out", O_WRONLY | O_CREAT | O_TRUNC, 0666 );
-		// int fd_out = open( "/home/eugene/pipe1/result.out", O_RDWR | O_CREAT | O_TRUNC, 0666 );
-		// close( STDOUT_FILENO );
-		// dup2( fd_out, STDOUT_FILENO );
-		// close( fd_out );
-		execvp( argv[command[numcom-1]], argv+command[numcom-1] );
-	}
+    int fd_out = open( "/home/box/result.out", O_RDWR | O_CREAT | O_TRUNC, 0666 );
+//	int fd_out = open( "/home/eugene/pipe1/result.out", O_RDWR | O_CREAT | O_TRUNC, 0666 );
+	close( STDOUT_FILENO );
+	dup2( fd_out, STDOUT_FILENO );
+	close( fd_out );
+	execvp( argv[command[numcom-1]], argv+command[numcom-1] );
 
     free( argv );
     free( command );
