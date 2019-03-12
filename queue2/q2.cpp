@@ -15,31 +15,22 @@ int main(int argc, char **argv)
 	struct mq_attr at, old_at;
 	int res;
 	
-//	fd = open( "/home/box/message.txt", O_RDWR | O_CREAT | O_TRUNC, 0666 );
-	fd = open( "/home/eugene/queue2/message.txt", O_RDWR | O_CREAT | O_TRUNC, 0666 );
+	fd = open( "/home/box/message.txt", O_RDWR | O_CREAT | O_TRUNC, 0666 );
+//	fd = open( "/home/eugene/queue2/message.txt", O_RDWR | O_CREAT | O_TRUNC, 0666 );
 	if( fd==-1 )
 	{
 		perror( "error open output" );
 		return 1;
 	}
 	if(mq_unlink("/test.mq") == 0)
-		fprintf(stdout, "Message queue %s removed from system.\n", "/test.mq");
+		printf( "Message queue %s removed from system.\n", "/test.mq");
 	at.mq_msgsize = BUFSIZE;
-	// at.mq_flags = 0;  
-	// at.mq_maxmsg = 10;  
-	// at.mq_curmsgs = 0;  
 	qfd = mq_open( "/test.mq", O_RDWR | O_CREAT, 0666, &at );
 	if( qfd==-1 )
 	{
 		perror( "error mq_open" );
 		return 1;
 	}
-	// res = mq_setattr( qfd, &at, &old_at );
-	// if( res==-1 )
-	// {
-		// perror( "error mq_setattr" );
-		// return 1;
-	// }
 	res = mq_getattr( qfd, &at );
 	if( res==-1 )
 	{
@@ -48,31 +39,31 @@ int main(int argc, char **argv)
 	}
 	printf( "Queue msg_size=%ld\n", at.mq_msgsize );
 	printf( "Queue is ready\n" );
-	int pid = fork();
-	if( pid )	// для отладки создаем 2 потока
-	{	// parent - тут пишем
-		while( 1 )
-		{
-			printf( "Ready to send message to queue...\n" );
-			fgets( buf, BUFSIZE, stdin );
-			res = strlen( buf );
-			buf[res] = '\0'; // обрезаем мусор
-			if( !strncmp(buf, "exit", 4 ) )
-				break;
-			printf( "Sending to queue\n%s", buf );		
-			res = mq_send( qfd, buf, res, 0 );
-			if( res==-1 )
-			{
-				perror("error sending to queue" );
-				return 1;
-			}
-		}
-		printf( "Exit in parent\n" );
-		mq_unlink( "/test.mq" );
-		kill( pid, SIGTERM );
-		wait( &res );
-	}
-	else
+	// int pid = fork();
+	// if( pid )	// для отладки создаем 2 потока
+	// {	// parent - тут пишем
+		// while( 1 )
+		// {
+			// printf( "Ready to send message to queue...\n" );
+			// fgets( buf, BUFSIZE, stdin );
+			// res = strlen( buf );
+			// buf[res] = '\0'; // обрезаем мусор
+			// if( !strncmp(buf, "exit", 4 ) )
+				// break;
+			// printf( "Sending to queue\n%s", buf );		
+			// res = mq_send( qfd, buf, res, 0 );
+			// if( res==-1 )
+			// {
+				// perror("error sending to queue" );
+				// return 1;
+			// }
+		// }
+		// printf( "Exit in parent\n" );
+		// mq_unlink( "/test.mq" );
+		// kill( pid, SIGTERM );
+		// wait( &res );
+	// }
+	// else
 	{	// child	- тут читаем
 		while( 1 )
 		{
@@ -90,7 +81,8 @@ int main(int argc, char **argv)
 			printf( "Write to output...\n" );
 			write( fd, buf, res );
 		}
-		mq_close( qfd );
+		mq_unlink( "/test.mq" );
+//		mq_close( qfd );
 	}
 	return 0;
 }
