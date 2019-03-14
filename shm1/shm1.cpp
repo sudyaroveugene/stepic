@@ -24,13 +24,17 @@ int main(int argc, char **argv)
 	}
 	printf( "Shared memory ready for use\n" );
 	mem = (char*) shmat( shm_d, NULL, 0 );
-	if( (int)mem==-1 )
+	if( mem==(char*)-1 )
 	{
 		perror( "error shmat" );
 		return 1;
 	}
 	printf( "Setting memory to %d\n", SET_CONST );
-	memset( mem, SET_CONST, SHM_MEMSIZE );
+	int k = 1024*1024;
+	for( int i=0; i<1024; i++ )
+	{
+		memset( (mem+i*k), SET_CONST, k );
+	}
 	printf( "Done\n" );
 
 	// int pid = fork();	// для отладки создаем 2 потока
@@ -52,7 +56,10 @@ int main(int argc, char **argv)
 		// }
 		// for( int i=0; i<SHM_MEMSIZE; i++ )
 			// if( ch[i]!=SET_CONST )
-				// printf( "offset=%d:%d", i, ch[i] );
+			// {
+				// printf( "offset=%d:%d\n", i, ch[i] );
+				// break;
+			// }
 		// printf( "Done\n" );
 
 	// }
